@@ -12,8 +12,3 @@ def get_gemini_api_key():
     genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
     model = genai.GenerativeModel('gemini-2.0-flash')
     return model
-
-
-# response = model.generate_content('who are you model name')
-# print(response.text)
-
