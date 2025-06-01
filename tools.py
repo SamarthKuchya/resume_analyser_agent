@@ -1,3 +1,5 @@
+# import necessary libraries
+
 import os
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -8,11 +10,14 @@ from crewai.tools import BaseTool
 import base64
 from datetime import date
 from PyPDF2 import PdfReader
-import pymupdf   # PyMuPDF
+import pymupdf
 
+
+# getting today's date
 today = date.today()
 
-
+ 
+# function to download attachments from Gmail and save them to a specified folder
 def GetAttachments(service, user_id, msg_id):
     """Get and store attachment from Message with given id.
 
@@ -38,14 +43,14 @@ def GetAttachments(service, user_id, msg_id):
             with open(path, 'wb') as f:
                 f.write(file_data)
 
-
+# This code defines a tool for connecting to Gmail, listing emails, and downloading attachments (specifically resumes) from the inbox. It also includes a tool for reading PDF files and extracting text from them.
 class GmailTool(BaseTool):
     name:str = "gmail_tool"
     
     description :str = "A tool to connect to Gmail and list emails."
     
-    def _run(self) -> str:
-
+    def _run(self,after_date:str) -> str:
+        print(f"resume after:{after_date}")
         creds = None
         SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
         flow = InstalledAppFlow.from_client_secrets_file(
@@ -69,31 +74,25 @@ class GmailTool(BaseTool):
             # Call the Gmail API
             service = build("gmail", "v1", credentials=creds)
             results = service.users().labels().list(userId="me").execute()
-            labels = results.get("labels", [])
-            # if not labels:
-            #     print("No labels found.")
-            # else:
-            #     print("Labels:")
-            #     for label in labels:
-            #         print(f"{label['name']} ({label['id']})")
 
         except HttpError as error:
             # TODO(developer) - Handle errors from gmail API.
             print(f"An error occurred: {error}")
 
-        # results = service.users().messages().list(userId='me', q = f'resume after:{today}').execute()
-        results = service.users().messages().list(userId='me', q = f'resume after:2025-05-31').execute()
-
+        results = service.users().messages().list(userId='me', q = f"resume after:{after_date}").execute()
+        
         messages = results.get("messages")
-        for msg in messages:
-            txt = service.users().messages().get(userId='me', id=msg['id']).execute()
-            try:
-                GetAttachments(service,'me',msg['id'])
-            except KeyError:
-                pass
-        files = os.listdir('Resumes')
-        return "Gmail tool executed successfully, attachments downloaded if available. Check the 'Resumes' folder for files. file names: " + ", ".join(files) if files else "No resumes found in the inbox."
-    
+        try:
+            for msg in messages:
+                txt = service.users().messages().get(userId='me', id=msg['id']).execute()
+                try:
+                    GetAttachments(service,'me',msg['id'])
+                except KeyError:
+                    pass
+            files = os.listdir('Resumes')
+            return "Gmail tool executed successfully, attachments downloaded if available. Check the 'Resumes' folder for files. file names: " + ", ".join(files) if files else "No resumes found in the inbox."
+        except TypeError as e:
+            return f"No messages found in the inbox after {after_date}. Please check the date format or try a different date."
     
 class Read_Pdf(BaseTool):
     name: str = "read_pdf"
