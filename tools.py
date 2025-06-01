@@ -1,5 +1,4 @@
 # import necessary libraries
-
 import os
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -11,10 +10,6 @@ import base64
 from datetime import date
 from PyPDF2 import PdfReader
 import pymupdf
-
-
-# getting today's date
-today = date.today()
 
  
 # function to download attachments from Gmail and save them to a specified folder
@@ -50,7 +45,6 @@ class GmailTool(BaseTool):
     description :str = "A tool to connect to Gmail and list emails."
     
     def _run(self,after_date:str) -> str:
-        print(f"resume after:{after_date}")
         creds = None
         SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
         flow = InstalledAppFlow.from_client_secrets_file(
